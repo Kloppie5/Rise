@@ -1,0 +1,80 @@
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+      var save = {}
+      var state = {}
+      $(document).ready(function() {
+        loadSave()
+        updateDisplay()
+      })
+
+      function loadSave ( ) {
+        save = localStorage.getItem("save")
+        if ( !save ) {
+          reset()
+          return
+        }
+
+        var kdf = CryptoJS.PBKDF2("look at", "all these watermelons", {
+          keySize: 8,
+          hasher: CryptoJS.algo.SHA1,
+          iterations: 1000
+        })
+        
+        var key = CryptoJS.enc.Hex.parse(kdf.toString().substring(0, 32))
+        var iv = CryptoJS.enc.Hex.parse(kdf.toString().substring(32, 64))
+
+        state = CryptoJS.AES.decrypt(save, key, { iv: iv }).toString(CryptoJS.enc.Utf8)
+        
+        state = JSON.parse(state)
+      }
+      function updateSave ( ) {
+        save = JSON.stringify(state)
+          
+        var kdf = CryptoJS.PBKDF2("look at", "all these watermelons", {
+          keySize: 8,
+          hasher: CryptoJS.algo.SHA1,
+          iterations: 1000
+        })
+
+        var key = CryptoJS.enc.Hex.parse(kdf.toString().substring(0, 32))
+        var iv = CryptoJS.enc.Hex.parse(kdf.toString().substring(32, 64))
+
+        save = CryptoJS.AES.encrypt(save, key, { iv: iv }).toString()
+      }
+      function saveSave ( ) {
+        localStorage.setItem("save", save)
+      }
+
+
+
+
+      function increment ( ) {
+        state.watermelons += 1
+        updateDisplay()
+        updateSave()
+        saveSave()
+      }
+      function reset ( ) {
+        state = {}
+        state.watermelons = 0
+        updateDisplay()
+        updateSave()
+        saveSave()
+      }
+      function updateDisplay ( ) {
+        document.getElementById("watermelons").innerHTML = state.watermelons
+      }
+    </script>
+  </head>
+  <body>
+    <!-- center -->
+    <div style="text-align: center;">
+      Watermelons: <p id="watermelons">-</p>
+      <button onclick="increment()">Increase</button><br>
+      <button onclick="reset()">Reset</button>
+    </div>
+  </body>
+</html>
